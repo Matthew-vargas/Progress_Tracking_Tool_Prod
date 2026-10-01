@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jira Progress Report</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --ink:#1d2330; --muted:#667085; --line:#e4e7ec;
+          --done:#12805c; --open:#b54708; --accent:#2f5bea; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.5 system-ui, -apple-system, Segoe UI, sans-serif; background:var(--bg); color:var(--ink); }
+  main { max-width: 880px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+  label { display:block; font-weight:600; font-size:13px; margin: 12px 0 4px; }
+  input[type=text] { width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:6px; font:inherit; }
+  details summary { cursor:pointer; color: var(--muted); font-size: 13px; margin-top: 12px; }
+  button { margin-top: 16px; background: var(--accent); color:#fff; border:0; border-radius:6px; padding:9px 18px; font:inherit; font-weight:600; cursor:pointer; }
+  .error { background:#fef3f2; border:1px solid #fecdca; color:#b42318; padding:10px 14px; border-radius:8px; margin-bottom:20px; }
+  .grid { display:grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  @media (min-width: 700px) { .grid { grid-template-columns: repeat(4, 1fr); } }
+  .metric { border:1px solid var(--line); border-radius:8px; padding:14px; }
+  .metric .label { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; }
+  .metric .value { font-size:28px; font-weight:700; font-variant-numeric: tabular-nums; }
+  .done .value { color: var(--done); } .open .value { color: var(--open); }
+  .grid.two { grid-template-columns: 1fr; }
+  @media (min-width: 700px) { .grid.two { grid-template-columns: repeat(2, 1fr); } }
+  .pctm .value { color: var(--accent); }
+  .bar { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; margin: 8px 0 6px; }
+  .bar span { display: block; height: 100%; background: var(--done); }
+  .of { color: var(--muted); font-size: 13px; }
+  table { width:100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); }
+  td.num, th.num { text-align:right; font-variant-numeric: tabular-nums; }
+  .tag { font-size:11px; padding:2px 7px; border-radius:10px; font-weight:600; }
+  .tag.complete { background:#ecfdf3; color:var(--done); } .tag.incomplete { background:#fffaeb; color:var(--open); }
+  h2 { font-size: 16px; margin: 0 0 12px; }
+  .note { color: var(--muted); font-size: 13px; margin: 0 0 8px; }
+  .copy { font-family: ui-monospace, Consolas, monospace; font-size: 13px; background: var(--bg); padding: 10px; border-radius: 6px; white-space: pre; overflow-x:auto; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Jira Progress Report</h1>
+  <p class="sub">Upload a Jira filter export (.csv or .xlsx) to get story point and task completion counts. Nothing is stored.</p>
+
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+  <form class="card" method="post" enctype="multipart/form-data">
+    <label for="file">Jira export</label>
+    <input id="file" type="file" name="file" accept=".csv,.xlsx,.xlsm" required>
+    <details>
+      <summary>Status mapping</summary>
+      <label for="complete">Complete statuses (comma-separated)</label>
+      <input id="complete" type="text" name="complete" value="{{ complete_text }}">
+      <label for="incomplete">Incomplete statuses (comma-separated)</label>
+      <input id="incomplete" type="text" name="incomplete" value="{{ incomplete_text }}">
+    </details>
+    <button type="submit">Generate report</button>
+  </form>
+
+  {% if report %}{% set t = report.totals %}
+  <section class="card">
+    <h2>{{ report.filename }}</h2>
+    <div class="grid">
+      <div class="metric done"><div class="label">Story points completed</div><div class="value">{{ t.points_complete|pts }}</div></div>
+      <div class="metric open"><div class="label">Story points incomplete</div><div class="value">{{ t.points_incomplete|pts }}</div></div>
+      <div class="metric done"><div class="label">Tasks completed</div><div class="value">{{ t.tasks_complete }}</div></div>
+      <div class="metric open"><div class="label">Tasks incomplete</div><div class="value">{{ t.tasks_incomplete }}</div></div>
+    </div>
+    <div class="grid two" style="margin-top:12px">
+      <div class="metric pctm"><div class="label">Story points complete</div><div class="value">{{ t.points_pct }}%</div>
+        <div class="bar"><span style="width:{{ t.points_pct }}%"></span></div>
+        <div class="of">{{ t.points_complete|pts }} of {{ t.points_total|pts }} points</div></div>
+      <div class="metric pctm"><div class="label">Tasks complete</div><div class="value">{{ t.tasks_pct }}%</div>
+        <div class="bar"><span style="width:{{ t.tasks_pct }}%"></span></div>
+        <div class="of">{{ t.tasks_complete }} of {{ t.tasks_total }} tasks</div></div>
+    </div>
+    <p class="note" style="margin-top:16px">Copy for your report:</p>
+    <div class="copy">Story Points Completed: {{ t.points_complete|pts }}
+Story Points Incomplete: {{ t.points_incomplete|pts }}
+Story Points % Complete: {{ t.points_pct }}%
+Tasks Completed: {{ t.tasks_complete }}
+Tasks Incomplete: {{ t.tasks_incomplete }}
+Tasks % Complete: {{ t.tasks_pct }}%</div>
+  </section>
+
+  <section class="card">
+    <h2>By status</h2>
+    <table>
+      <thead><tr><th>Status</th><th></th><th class="num">Tasks</th><th class="num">Points</th></tr></thead>
+      <tbody>
+      {% for status, s in report.by_status %}
+        <tr><td>{{ status }}</td><td><span class="tag {{ s.bucket }}">{{ s.bucket }}</span></td>
+            <td class="num">{{ s.tasks }}</td><td class="num">{{ s.points|pts }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <p class="note" style="margin-top:12px">Read from “{{ report.columns.points }}” and “{{ report.columns.status }}”.</p>
+  </section>
+
+  {% if report.unmapped %}
+  <section class="card">
+    <h2>Not counted ({{ report.unmapped|length }})</h2>
+    <p class="note">These statuses aren't in either list, so they're excluded from all totals. Add them under Status mapping if they should count.</p>
+    <table>{% for i in report.unmapped %}<tr><td>{{ i.key }}</td><td>{{ i.summary }}</td><td>{{ i.status or "(blank)" }}</td></tr>{% endfor %}</table>
+  </section>
+  {% endif %}
+
+  {% if report.unestimated %}
+  <section class="card">
+    <h2>No story points ({{ report.unestimated|length }})</h2>
+    <p class="note">Counted as tasks, but they add 0 points.</p>
+    <table>{% for i in report.unestimated %}<tr><td>{{ i.key }}</td><td>{{ i.summary }}</td><td>{{ i.status }}</td></tr>{% endfor %}</table>
+  </section>
+  {% endif %}
+  {% endif %}
+</main>
+</body>
+</html>
