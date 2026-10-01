@@ -36,6 +36,11 @@
   .tag { font-size:11px; padding:2px 7px; border-radius:10px; font-weight:600; }
   .tag.complete { background:#ecfdf3; color:var(--done); } .tag.incomplete { background:#fffaeb; color:var(--open); }
   h2 { font-size: 16px; margin: 0 0 12px; }
+  .head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .head h2 { overflow-wrap: anywhere; }
+  .clear { flex: none; font-size: 13px; font-weight: 600; color: var(--muted); text-decoration: none;
+           border: 1px solid var(--line); border-radius: 6px; padding: 5px 12px; }
+  .clear:hover { color: var(--ink); border-color: var(--muted); }
   .note { color: var(--muted); font-size: 13px; margin: 0 0 8px; }
   .copy { font-family: ui-monospace, Consolas, monospace; font-size: 13px; background: var(--bg); padding: 10px; border-radius: 6px; white-space: pre; overflow-x:auto; }
 </style>
@@ -62,7 +67,10 @@
 
   {% if report %}{% set t = report.totals %}
   <section class="card">
-    <h2>{{ report.filename }}</h2>
+    <div class="head">
+      <h2>{{ report.filename }}</h2>
+      <a class="clear" href="{{ url_for('index') }}">Clear report</a>
+    </div>
     <div class="grid">
       <div class="metric done"><div class="label">Story points completed</div><div class="value">{{ t.points_complete|pts }}</div></div>
       <div class="metric open"><div class="label">Story points incomplete</div><div class="value">{{ t.points_incomplete|pts }}</div></div>
