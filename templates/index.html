@@ -15,6 +15,7 @@
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 20px; margin-bottom: 20px; }
   label { display:block; font-weight:600; font-size:13px; margin: 12px 0 4px; }
   input[type=text] { width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:6px; font:inherit; }
+  .hint { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
   details summary { cursor:pointer; color: var(--muted); font-size: 13px; margin-top: 12px; }
   button { margin-top: 16px; background: var(--accent); color:#fff; border:0; border-radius:6px; padding:9px 18px; font:inherit; font-weight:600; cursor:pointer; }
   .error { background:#fef3f2; border:1px solid #fecdca; color:#b42318; padding:10px 14px; border-radius:8px; margin-bottom:20px; }
@@ -55,12 +56,21 @@
   <form class="card" method="post" enctype="multipart/form-data">
     <label for="file">Jira export</label>
     <input id="file" type="file" name="file" accept=".csv,.xlsx,.xlsm" required>
+    {% set cols_changed = points_col != default_points_col or status_col != default_status_col %}
+    <details {% if cols_changed or (error and 'Column mapping' in error) %}open{% endif %}>
+      <summary>Column mapping</summary>
+      <p class="hint">Enter the column's header name (safest, since it still works if columns move) or its letter, like J.</p>
+      <label for="points_col">Story points column</label>
+      <input id="points_col" type="text" name="points_col" value="{{ points_col }}" placeholder="{{ default_points_col }}">
+      <label for="status_col">Status column</label>
+      <input id="status_col" type="text" name="status_col" value="{{ status_col }}" placeholder="{{ default_status_col }}">
+    </details>
     <details>
       <summary>Status mapping</summary>
       <label for="complete">Complete statuses (comma-separated)</label>
-      <input id="complete" type="text" name="complete" value="{{ complete_text }}">
+      <input id="complete" type="text" name="complete_text" value="{{ complete_text }}">
       <label for="incomplete">Incomplete statuses (comma-separated)</label>
-      <input id="incomplete" type="text" name="incomplete" value="{{ incomplete_text }}">
+      <input id="incomplete" type="text" name="incomplete_text" value="{{ incomplete_text }}">
     </details>
     <button type="submit">Generate report</button>
   </form>
@@ -113,6 +123,14 @@ Tasks % Complete: {{ t.tasks_pct }}%</div>
     <h2>Not counted ({{ report.unmapped|length }})</h2>
     <p class="note">These statuses aren't in either list, so they're excluded from all totals. Add them under Status mapping if they should count.</p>
     <table>{% for i in report.unmapped %}<tr><td>{{ i.key }}</td><td>{{ i.summary }}</td><td>{{ i.status or "(blank)" }}</td></tr>{% endfor %}</table>
+  </section>
+  {% endif %}
+
+  {% if report.invalid_points %}
+  <section class="card">
+    <h2>Unreadable story points ({{ report.invalid_points|length }})</h2>
+    <p class="note">These values in the story points column aren't numbers, so they add 0 points. If there are a lot of them, the story points column is probably mapped wrong.</p>
+    <table>{% for i in report.invalid_points %}<tr><td>{{ i.key }}</td><td>{{ i.summary }}</td><td>{{ i.value }}</td></tr>{% endfor %}</table>
   </section>
   {% endif %}
 
