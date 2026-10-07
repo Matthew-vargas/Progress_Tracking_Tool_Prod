@@ -33,7 +33,7 @@ because nothing is stored.
 - Columns: finds "Custom field (Story point estimate)" and "Status" by header name,
   falling back to columns J and K.
 - Complete: QA Passed, Deployed To Production
-- Incomplete: To Do, In Progress, Dev to Test, REVISION
+- Incomplete: To Do, In Progress, Dev to Test, QA To Test, REVISION
   (both lists can be edited on the page under "Status mapping"; matching ignores case)
 - Tickets with no story points still count as tasks, with 0 points, and are listed.
 - Tickets whose status is in neither list are left out of the totals and listed,

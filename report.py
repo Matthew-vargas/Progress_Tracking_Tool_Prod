@@ -10,7 +10,7 @@ from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
 
 COMPLETE_STATUSES = ["QA Passed", "Deployed To Production"]
-INCOMPLETE_STATUSES = ["To Do", "In Progress", "Dev to Test", "REVISION"]
+INCOMPLETE_STATUSES = ["To Do", "In Progress", "Dev to Test", "QA To Test", "REVISION"]
 
 # Default column mapping. Each value can be a header name or a column letter (e.g. "J").
 POINTS_COLUMN = "Custom field (Story point estimate)"
